@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kafka-system-pub
+  namespace: demo
+spec:
+  containers:
+    - name: pub
+      image: raihankhanraka/kafka-pub:latest
+      ports:
+        - containerPort: 8080
