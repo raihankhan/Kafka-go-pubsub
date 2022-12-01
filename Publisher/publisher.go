@@ -27,7 +27,7 @@ func produce(wg *sync.WaitGroup) error {
 	clientConfig.Producer.RequiredAcks = kafkago.WaitForAll
 	clientConfig.Producer.Return.Successes = true
 	client, err := kafkago.NewClient(
-		[]string{"kafka-system-broker-0.kafka-system-pods.demo.svc.cluster.local:9092"},
+		[]string{"kafka-system-broker.demo.svc.cluster.local:9092"},
 		clientConfig,
 	)
 
@@ -49,6 +49,11 @@ func produce(wg *sync.WaitGroup) error {
 		}
 	}(producer)
 
+	err = client.RefreshMetadata()
+	if err != nil {
+		log.Println(err, "Failed to refresh metadata")
+	}
+
 	i := 0
 
 	for {
@@ -56,8 +61,18 @@ func produce(wg *sync.WaitGroup) error {
 		message := kafkago.ProducerMessage{
 			Topic:     "test",
 			Value:     kafkago.StringEncoder(fmt.Sprintf("Message %v produced", i)),
-			Partition: 2,
+			Partition: 0,
 		}
+
+		leader, err := client.Leader(message.Topic, message.Partition)
+		if err != nil {
+			log.Println("Failed to get leader for topic: ", message.Topic)
+			continue
+		}
+		req := kafkago.ProduceRequest{
+			RequiredAcks: 2,
+		}
+		res, err := leader.Produce(&req)
 
 		partition, offset, err := producer.SendMessage(&message)
 		if err != nil {

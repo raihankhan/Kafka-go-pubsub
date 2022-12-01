@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kafka-system-sub
+  namespace: demo
+spec:
+  containers:
+    - name: sub
+      image: raihankhanraka/kafka-sub:latest
+      env:
+        - name: BOOTSTRAP_SERVER
+          value: "kafka-system-broker.demo.svc.cluster.local:9092"
+        - name: TOPIC
+          value: "test"
+      ports:
+        - containerPort: 8080
